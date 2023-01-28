@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Controller\ArticleUpdatedAt;
 use App\Repository\ArticleRepository;
 use ApiPlatform\Core\Annotation\ApiResource;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -23,6 +24,11 @@ use Symfony\Component\Serializer\Annotation\Groups;
         'put',
         'patch',
         'delete',
+        'put_updated_at' => [
+            'method' => 'PUT',
+            'path' => '/articles/{id}/updated-at',
+            'controller' => ArticleUpdatedAt::class,
+        ],
     ]
 )]
 class Article
