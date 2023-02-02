@@ -1,28 +1,28 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
 
-
-use DateTimeImmutable;
-
-use Doctrine\ORM\Mapping as ORM;
-use App\Repository\UserRepository;
 use ApiPlatform\Core\Annotation\ApiFilter;
-use Doctrine\Common\Collections\Collection;
 use ApiPlatform\Core\Annotation\ApiResource;
-use Doctrine\Common\Collections\ArrayCollection;
-
-use Symfony\Component\Serializer\Annotation\Groups;
-use Symfony\Component\Security\Core\User\UserInterface;
-use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\DateFilter;
-use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\BooleanFilter;
-use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\NumericFilter;
-use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\RangeFilter;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\DateFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\ExistsFilter;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\NumericFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\OrderFilter;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
+use App\Repository\UserRepository;
+use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints\Email;
+use Symfony\Component\Validator\Constraints\NotBlank;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
@@ -46,50 +46,47 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 #[ApiFilter(DateFilter::class, properties: ['createdAt'])]
 #[ApiFilter(BooleanFilter::class, properties: ['status'])]
 #[ApiFilter(NumericFilter::class, properties: ['age'])]
-#[ApiFilter(RangeFilter::class, properties: ['age'])]
 #[ApiFilter(ExistsFilter::class, properties: ['updatedAt'])]
 #[ApiFilter(OrderFilter::class, properties: ['id'], arguments: ['orderParameterName' => 'order'])]
-
+#[UniqueEntity('email', message: 'Email already used.')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
-
     use ResourceId;
     use Timestampable;
-    #[ORM\Column(length: 180, unique: true)]
-    #[Groups(['user_read', 'user_details_read','article_details_read'])]
-    private ?string $email = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'string', length: 180, unique: true)]
+    #[Groups(['user_read', 'user_details_read', 'article_details_read'])]
+    #[NotBlank(message: 'email is required')]
+    #[Email(message: 'Email format is invalid')]
+    private string $email;
+
+    #[ORM\Column(type: 'json')]
     private array $roles = [];
 
-    /**
-     * @var string The hashed password
-     */
-    #[ORM\Column]
-    private ?string $password = null;
+    #[ORM\Column(type: 'string')]
+    #[NotBlank(message: 'password is required')]
+    private string $password;
 
     #[ORM\OneToMany(mappedBy: 'author', targetEntity: Article::class, orphanRemoval: true)]
     #[Groups(['user_details_read'])]
-  
     private Collection $articles;
 
-    #[ORM\Column]
-    #[Groups(['user_read', 'user_details_read','article_details_read'])]
-    private ?bool $status = null;
+    #[ORM\Column(type: 'boolean')]
+    #[Groups(['user_read', 'user_details_read', 'article_details_read'])]
+    private bool $status;
 
-    #[ORM\Column]
-    #[Groups(['user_read', 'user_details_read','article_details_read'])] 
-    private ?int $age = null;
+    #[ORM\Column(type: 'integer')]
+    #[Groups(['user_read', 'user_details_read', 'article_details_read'])]
+    private int $age;
 
     public function __construct()
     {
-         $this->articles = new ArrayCollection();
-         $this->createdAt = new \DateTimeImmutable();
+        $this->articles = new ArrayCollection();
+        $this->createdAt = new DateTimeImmutable();
+
         $this->status = true;
         $this->age = 18;
-
     }
-
 
     public function getEmail(): ?string
     {
@@ -109,6 +106,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @see UserInterface
      */
     public function getUserIdentifier(): string
+    {
+        return (string) $this->email;
+    }
+
+    /**
+     * add this function to get usename for jwt service needs.
+     */
+    public function getUsername(): string
     {
         return (string) $this->email;
     }
@@ -167,7 +172,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function addArticle(Article $article): self
     {
         if (!$this->articles->contains($article)) {
-            $this->articles->add($article);
+            $this->articles[] = $article;
             $article->setAuthor($this);
         }
 
@@ -186,7 +191,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function isStatus(): ?bool
+    public function getStatus(): ?bool
     {
         return $this->status;
     }

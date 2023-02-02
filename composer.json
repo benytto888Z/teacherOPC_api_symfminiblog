@@ -7,12 +7,14 @@
         "php": ">=8.0.26",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "acmephp/ssl": "^2.1",
         "api-platform/core": "2.6.8",
         "doctrine/annotations": "^1.0",
         "doctrine/doctrine-bundle": "^2.8",
         "doctrine/doctrine-migrations-bundle": "^3.2",
         "doctrine/orm": "^2.14",
         "lexik/jwt-authentication-bundle": "^2.16",
+        "nelmio/cors-bundle": "^2.2",
         "symfony/asset": "6.0.*",
         "symfony/console": "6.0.*",
         "symfony/dotenv": "6.0.*",
@@ -21,6 +23,7 @@
         "symfony/runtime": "6.0.*",
         "symfony/serializer": "6.0.*",
         "symfony/twig-bundle": "6.0.*",
+        "symfony/validator": "6.0.*",
         "symfony/yaml": "6.0.*"
     },
     "config": {
